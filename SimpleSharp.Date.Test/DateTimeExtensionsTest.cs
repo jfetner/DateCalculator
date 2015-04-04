@@ -53,6 +53,48 @@ namespace SimpleSharp.Date.Test
         }
 
         [Test]
+        public void TestStartOfWeek_WithFirstDayOfYear_ExpectStartDateToBeLastWeekOfPreviousYear()
+        {
+            //Arrange
+            DateTime sut = new DateTime(2015, 1, 1);
+            DateTime expectedFirstWeek = new DateTime(2014, 12, 28);
+
+            //Act
+            var startOfFirstWeek = sut.StartOfWeek();
+
+            //Assert
+            Assert.AreEqual(expectedFirstWeek, startOfFirstWeek);
+        }
+
+        [Test]
+        public void TestStartOfWeek_WithDayInMiddleOfTheYear_ExpectCorrectStartDate()
+        {
+            //Arrange
+            DateTime sut = new DateTime(2014, 7, 23);
+            DateTime expectedStartOfWeek = new DateTime(2014, 7, 20);
+
+            //Act
+            var startOfWeek = sut.StartOfWeek();
+
+            //Assert
+            Assert.AreEqual(expectedStartOfWeek, startOfWeek);
+        }
+
+        [Test]
+        public void TestStartOfWeek_WithDayInLastWeekOfTheYear_ExpectCorrectStartDate()
+        {
+            //Arrange
+            DateTime sut = new DateTime(2014, 12, 26);
+            DateTime expectedStartOfWeek = new DateTime(2014, 12, 21);
+
+            //Act
+            var startOfWeek = sut.StartOfWeek();
+
+            //Assert
+            Assert.AreEqual(expectedStartOfWeek, startOfWeek);
+        }
+
+        [Test]
         public void TestEndDateOfWeek_WithFirstWeek_ExpectCorrectEndDate()
         {
             //Arrange

@@ -14,6 +14,14 @@ namespace SimpleSharp.Date
             return firstSundayOfTheYear.AddDays(weekNum * DAYS_IN_WEEK);
         }
 
+        public static DateTime StartOfWeek(this DateTime date, DayOfWeek startOfWeek = DayOfWeek.Sunday)
+        {
+            int diff = date.DayOfWeek - startOfWeek;
+            if (diff < 0)
+                diff += 7;
+            return date.Date.AddDays(-1 * diff);
+        }
+
         public static DateTime EndDateOfWeek(int year, int weekOfYear)
         {
             return StartDateOfWeek(year, weekOfYear).AddDays(DAYS_IN_WEEK - 1);
