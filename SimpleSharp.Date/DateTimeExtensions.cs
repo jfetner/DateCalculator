@@ -9,15 +9,10 @@ namespace SimpleSharp.Date
         public static DateTime StartDateOfWeek(int year, int weekOfYear)
         {
             DateTime jan1 = new DateTime(year, 1, 1);
-            int numberOfDaysPastSunday = DayOfWeek.Sunday - jan1.DayOfWeek;
+            DateTime firstSundayOfTheYear = jan1.AddDays(DayOfWeek.Sunday - jan1.DayOfWeek);
 
-            DateTime firstSundayOfTheYear = jan1.AddDays(numberOfDaysPastSunday);
-            var calendar = CultureInfo.CurrentCulture.Calendar;
-            int firstWeek = calendar.GetWeekOfYear(jan1, CalendarWeekRule.FirstDay, DayOfWeek.Sunday);
-
-            var weekNum = weekOfYear-1;
-            var result = firstSundayOfTheYear.AddDays(weekNum * DAYS_IN_WEEK);
-            return result;
+            var weekNum = weekOfYear - 1;
+            return firstSundayOfTheYear.AddDays(weekNum * DAYS_IN_WEEK);
         }
 
         public static DateTime EndDateOfWeek(int year, int weekOfYear)
