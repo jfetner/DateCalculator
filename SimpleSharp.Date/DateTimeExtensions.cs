@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SimpleSharp.Date
 {
@@ -13,15 +8,18 @@ namespace SimpleSharp.Date
         public static DateTime StartDateOfWeek(int year, int weekOfYear)
         {
             DateTime jan1 = new DateTime(year, 1, 1);
-            int numberOfDaysPastSunday = DayOfWeek.Sunday - jan1.DayOfWeek;
+            DateTime firstSundayOfTheYear = jan1.AddDays(DayOfWeek.Sunday - jan1.DayOfWeek);
 
-            DateTime firstSundayOfTheYear = jan1.AddDays(numberOfDaysPastSunday);
-            var calendar = CultureInfo.CurrentCulture.Calendar;
-            int firstWeek = calendar.GetWeekOfYear(jan1, CalendarWeekRule.FirstDay, DayOfWeek.Sunday);
+            var weekNum = weekOfYear - 1;
+            return firstSundayOfTheYear.AddDays(weekNum * DAYS_IN_WEEK);
+        }
 
-            var weekNum = weekOfYear-1;
-            var result = firstSundayOfTheYear.AddDays(weekNum * DAYS_IN_WEEK);
-            return result;
+        public static DateTime StartOfWeek(this DateTime date, DayOfWeek startOfWeek = DayOfWeek.Sunday)
+        {
+            int diff = date.DayOfWeek - startOfWeek;
+            if (diff < 0)
+                diff += 7;
+            return date.Date.AddDays(-1 * diff);
         }
 
         public static DateTime EndDateOfWeek(int year, int weekOfYear)
@@ -31,7 +29,7 @@ namespace SimpleSharp.Date
 
         public static DateTime ThisTimeYesterday(this DateTime dateTime)
         {
-            return dateTime.Date.AddDays(-1);
+            return dateTime.Date.SubtractDays(1);
         }
 
         public static DateTime StartOfDay(this DateTime dateTime)
@@ -41,7 +39,7 @@ namespace SimpleSharp.Date
 
         public static DateTime EndOfDay(this DateTime startOfDay)
         {
-            return startOfDay.AddDays(1).AddMilliseconds(-1);
+            return startOfDay.AddDays(1).SubtractMilliseconds(1);
         }
 
         public static DateRangeValue YesterdayUTC(TimeSpan offsetFromUTC, DateTime? utcNow = null)
@@ -58,7 +56,7 @@ namespace SimpleSharp.Date
             var now = utcNow.HasValue ? utcNow.Value : DateTime.UtcNow;
             var nowInUserTime = now.Add(offsetFromUTC);
 
-            var previousWeekStartDate = nowInUserTime.AddDays(-7).Date.Add(offsetToUTC);
+            var previousWeekStartDate = nowInUserTime.SubtractDays(7).Date.Add(offsetToUTC);
             var previousWeekEndDate = YesterdayUTC(offsetFromUTC, now).EndDate;
 
             return new DateRangeValue(previousWeekStartDate, previousWeekEndDate, offsetFromUTC);
@@ -103,8 +101,8 @@ namespace SimpleSharp.Date
             
             var startOfCurrentMonth = new DateTime(nowInUserTime.Year, nowInUserTime.Month, 1).Add(offsetToUTC);
 
-            var startOfLastMonth = startOfCurrentMonth.AddMonths(-1);
-            var endOfLastMonth = startOfCurrentMonth.AddDays(-1).EndOfDay();
+            var startOfLastMonth = startOfCurrentMonth.SubtractMonths(1);
+            var endOfLastMonth = startOfCurrentMonth.SubtractDays(1).EndOfDay();
 
             return new DateRangeValue(startOfLastMonth, endOfLastMonth, offsetFromUTC);
         }
@@ -116,8 +114,8 @@ namespace SimpleSharp.Date
             
             var startOfCurrentYear = new DateTime(nowInUserTime.Year, 1, 1).Add(offsetToUTC);
 
-            var startOfLastYear = startOfCurrentYear.AddYears(-1);
-            var endOfLastYear = startOfCurrentYear.AddDays(-1).EndOfDay();
+            var startOfLastYear = startOfCurrentYear.SubtractYears(1);
+            var endOfLastYear = startOfCurrentYear.SubtractDays(1).EndOfDay();
 
             return new DateRangeValue(startOfLastYear, endOfLastYear, offsetFromUTC);
         }
@@ -138,7 +136,7 @@ namespace SimpleSharp.Date
             var offsetToUTC = offsetFromUTC.Negate();
 
             var nowInUserTime = utcNow.HasValue ? utcNow.Value.Add(offsetFromUTC) : DateTime.UtcNow.Add(offsetFromUTC);
-            var yesterdayUTC = nowInUserTime.AddDays(-1).Date.Add(offsetToUTC);
+            var yesterdayUTC = nowInUserTime.SubtractDays(1).Date.Add(offsetToUTC);
 
             return yesterdayUTC;
         }
@@ -148,10 +146,10 @@ namespace SimpleSharp.Date
             var offsetToUTC = offsetFromUTC.Negate();
             var todayInUserTime = utcNow.HasValue ? utcNow.Value.Date : DateTime.UtcNow.Add(offsetFromUTC).Date;
 
-            var start = todayInUserTime.AddDays(-7 * weeksAgo);
+            var start = todayInUserTime.SubtractDays(7 * weeksAgo);
             while (start.DayOfWeek != DayOfWeek.Sunday)
             {
-                start = start.AddDays(-1);
+                start = start.SubtractDays(1);
             }
             return start.Add(offsetToUTC);
         }
@@ -161,7 +159,7 @@ namespace SimpleSharp.Date
             var offsetToUTC = offsetFromUTC.Negate();
             var todayInUserTime = utcNow.HasValue ? utcNow.Value.Date : DateTime.UtcNow.Add(offsetFromUTC).Date;
 
-            var end = todayInUserTime.AddDays(-7 * weeksAgo);
+            var end = todayInUserTime.SubtractDays(7 * weeksAgo);
             while (end.DayOfWeek != DayOfWeek.Saturday)
             {
                 end = end.AddDays(1);
@@ -172,6 +170,62 @@ namespace SimpleSharp.Date
         public static int GetQuarter(this DateTime dateTime)
         {
             return ((dateTime.Month - 1) / 3) + 1;
-        }    
+        }
+
+        public static DateTime SubtractMilliseconds(this DateTime date, double value)
+        {
+            if (value < 0)
+                throw new ArgumentException("Value cannot be less than 0.", "value");
+
+            return date.AddMilliseconds(value * -1);
+        }
+
+        public static DateTime SubtractSeconds(this DateTime date, double value)
+        {
+            if (value < 0)
+                throw new ArgumentException("Value cannot be less than 0.", "value");
+
+            return date.AddSeconds(value * -1);
+        }
+
+        public static DateTime SubtractMinutes(this DateTime date, double value)
+        {
+            if (value < 0)
+                throw new ArgumentException("Value cannot be less than 0.", "value");
+
+            return date.AddMinutes(value * -1);
+        }
+
+        public static DateTime SubtractHours(this DateTime date, double value)
+        {
+            if (value < 0)
+                throw new ArgumentException("Value cannot be less than 0.", "value");
+
+            return date.AddHours(value * -1);
+        }
+
+        public static DateTime SubtractDays(this DateTime date, double value)
+        {
+            if (value < 0)
+                throw new ArgumentException("Value cannot be less than 0.", "value");
+
+            return date.AddDays(value * -1);
+        }
+
+        public static DateTime SubtractMonths(this DateTime date, int value)
+        {
+            if (value < 0)
+                throw new ArgumentException("Value cannot be less than 0.", "value");
+
+            return date.AddMonths(value * -1);
+        }
+
+        public static DateTime SubtractYears(this DateTime date, int value)
+        {
+            if (value < 0)
+                throw new ArgumentException("Value cannot be less than 0.", "value");
+            
+            return date.AddYears(value * -1);
+        }
     }
 }
